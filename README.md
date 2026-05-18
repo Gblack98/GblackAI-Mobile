@@ -2,7 +2,7 @@
 
 > ⚙️ **Backend API**: [AbiHack2025_GblackAI](https://github.com/Gblack98/AbiHack2025_GblackAI) · [API Docs](https://gblackai-gblack98.vercel.app/docs)
 
-A Flutter mobile app for AI-powered farm disease detection, connected to the **GblackAI** API (AbiHack 2025).
+A Flutter mobile app for AI-powered farm disease detection, connected to the **GblackAI** API.
 
 ---
 
