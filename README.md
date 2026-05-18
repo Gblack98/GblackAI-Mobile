@@ -1,6 +1,6 @@
 # 📱 GblackAI Mobile
 
-> ⚙️ **Backend API**: [AbiHack2025_GblackAI](https://github.com/Gblack98/AbiHack2025_GblackAI) · [API Docs](https://gblackai-gblack98.vercel.app/docs)
+> ⚙️ **Backend API**: [GblackAI-API](https://github.com/Gblack98/GblackAI-API) · [API Docs](https://gblackai.vercel.app/docs)
 
 A Flutter mobile app for AI-powered farm disease detection, connected to the **GblackAI** API.
 
@@ -103,7 +103,7 @@ Declared in `AndroidManifest.xml`:
 
 ## 🔗 API
 
-The app uses the `POST /api/v12/analyze` endpoint from [GblackAI API](https://github.com/Gblack98/AbiHack2025_GblackAI).
+The app uses the `POST /api/v12/analyze` endpoint from [GblackAI API](https://github.com/Gblack98/GblackAI-API).
 
 ---
 
