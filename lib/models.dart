@@ -15,13 +15,20 @@ enum AnalysisType {
 
 class AnalysisResponse {
   final AnalysisSubject subject;
+  final String wolofSummary;
   final List<Detection> detections;
 
-  const AnalysisResponse({required this.subject, required this.detections});
+  const AnalysisResponse({
+    required this.subject,
+    required this.wolofSummary,
+    required this.detections,
+  });
 
   factory AnalysisResponse.fromJson(Map<String, dynamic> json) {
     return AnalysisResponse(
       subject: AnalysisSubject.fromJson(json['subject'] as Map<String, dynamic>),
+      // Falls back to '' for history entries saved before this field existed.
+      wolofSummary: json['wolofSummary'] as String? ?? '',
       detections: (json['detections'] as List<dynamic>)
           .map((d) => Detection.fromJson(d as Map<String, dynamic>))
           .toList(),
@@ -30,6 +37,7 @@ class AnalysisResponse {
 
   Map<String, dynamic> toJson() => {
         'subject': subject.toJson(),
+        'wolofSummary': wolofSummary,
         'detections': detections.map((d) => d.toJson()).toList(),
       };
 }

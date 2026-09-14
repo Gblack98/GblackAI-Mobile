@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import '../models.dart';
+import '../services/tts_service.dart';
 import '../widgets/detection_card.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -78,6 +82,14 @@ class _ResultScreenState extends State<ResultScreen>
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: _SubjectCard(subject: response.subject),
               ),
+            ),
+          ),
+
+          // ─── Wolof audio summary ──────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: _WolofAudioCard(text: response.wolofSummary),
             ),
           ),
 
@@ -271,6 +283,153 @@ class _SubjectCardState extends State<_SubjectCard>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─── Wolof Audio Card ─────────────────────────────────────────────────────────
+
+enum _TtsState { idle, loading, playing, error }
+
+class _WolofAudioCard extends StatefulWidget {
+  final String text;
+  const _WolofAudioCard({required this.text});
+
+  @override
+  State<_WolofAudioCard> createState() => _WolofAudioCardState();
+}
+
+class _WolofAudioCardState extends State<_WolofAudioCard> {
+  final _player = AudioPlayer();
+  _TtsState _state = _TtsState.idle;
+  String? _errorMsg;
+  StreamSubscription<void>? _completeSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _completeSub = _player.onPlayerComplete.listen((_) {
+      if (mounted) setState(() => _state = _TtsState.idle);
+    });
+  }
+
+  @override
+  void dispose() {
+    _completeSub?.cancel();
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_state == _TtsState.playing) {
+      await _player.pause();
+      if (mounted) setState(() => _state = _TtsState.idle);
+      return;
+    }
+    if (_state == _TtsState.loading) return;
+
+    setState(() {
+      _state = _TtsState.loading;
+      _errorMsg = null;
+    });
+
+    try {
+      final path = await TtsService.synthesize(widget.text);
+      if (!mounted) return;
+      await _player.play(DeviceFileSource(path));
+      if (!mounted) return;
+      setState(() => _state = _TtsState.playing);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _state = _TtsState.error;
+        _errorMsg = e is TtsException ? e.message : 'Audio unavailable.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (widget.text.trim().isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.primaryContainer.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.primary.withOpacity(0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _PlayButton(state: _state, onTap: _toggle),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'WOLOF',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.text,
+                  style: const TextStyle(fontSize: 14, height: 1.4),
+                ),
+                if (_state == _TtsState.error) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _errorMsg ?? 'Audio unavailable.',
+                    style: TextStyle(fontSize: 12, color: cs.error),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlayButton extends StatelessWidget {
+  final _TtsState state;
+  final VoidCallback onTap;
+  const _PlayButton({required this.state, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(color: cs.primary, shape: BoxShape.circle),
+        child: state == _TtsState.loading
+            ? const Padding(
+                padding: EdgeInsets.all(10),
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Icon(
+                state == _TtsState.playing
+                    ? Icons.pause_rounded
+                    : Icons.volume_up_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
       ),
     );
   }
